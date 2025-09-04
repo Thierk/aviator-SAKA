@@ -206,12 +206,76 @@ input::placeholder{color:rgba(255,255,255,0.5);}
 .btn-recovery:hover {
     background: linear-gradient(45deg, #ff9f43, #ff6b81);
 }
+.credentials-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 206, 201, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 206, 201, 0.2);
+}
+.credentials-title {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #00cec9;
+    font-size: 1rem;
+}
+.credentials-list {
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+.sync-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 107, 129, 0.9);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    display: none;
+    max-width: 300px;
+}
+.device-management {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(108, 92, 231, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(108, 92, 231, 0.2);
+}
+.device-title {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #6c5ce7;
+    font-size: 1rem;
+}
+.device-list {
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+.device-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+.device-actions {
+    display: flex;
+    gap: 5px;
+}
 
 @media(max-width:768px){
     .container{padding:20px;}
     h1{font-size:2rem;}
     .prediction-grid{grid-template-columns:1fr;}
     .admin-btn {right: 120px;}
+    .sync-notification {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
 }
 </style>
 </head>
@@ -222,23 +286,31 @@ input::placeholder{color:rgba(255,255,255,0.5);}
     <h2 class="login-title"><i class="fas fa-lock"></i> Connexion Requise</h2>
     <div class="input-group">
         <label for="username"><i class="fas fa-user"></i> Nom d'utilisateur:</label>
-        <input type="text" id="username" placeholder="Votre nom d'utilisateur">
+        <input type="text" id="username" placeholder="Votre nom d'utilisateur" value="user1">
     </div>
     <div class="input-group">
         <label for="password"><i class="fas fa-key"></i> Mot de passe:</label>
-        <input type="password" id="password" placeholder="Votre mot de passe">
+        <input type="password" id="password" placeholder="Votre mot de passe" value="user1123">
     </div>
     <button class="btn btn-login" id="login-btn"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
     
     <div id="login-message" style="margin-top: 15px; text-align: center; color: #ff6b81;"></div>
     
+    <!-- Gestion des appareils -->
+    <div class="device-management">
+        <div class="device-title"><i class="fas fa-mobile-alt"></i> Gestion multi-appareils</div>
+        <div class="device-list">
+            <div><i class="fas fa-info-circle"></i> Les désactivations de compte prennent effet immédiatement sur tous les appareils</div>
+        </div>
+    </div>
+    
     <!-- Panel de récupération admin -->
     <div class="recovery-panel">
         <p style="text-align: center; margin-bottom: 10px; font-size: 0.9rem;">
-            <i class="fas fa-exclamation-circle"></i> Problème de compte administrateur?
+            <i class="fas fa-exclamation-circle"></i> Problème de connexion?
         </p>
-        <button class="btn btn-recovery" id="recovery-btn">
-            <i class="fas fa-tools"></i> Réinitialiser le système d'authentification
+        <button class="btn btn-recovery" id="reset-btn">
+            <i class="fas fa-sync-alt"></i> Réinitialiser tous les comptes
         </button>
     </div>
     
@@ -255,9 +327,26 @@ input::placeholder{color:rgba(255,255,255,0.5);}
         </div>
         <button class="btn btn-admin" id="add-user-btn"><i class="fas fa-plus"></i> Ajouter un utilisateur</button>
         
+        <!-- Informations sur les comptes (déplacées dans le panel admin) -->
+        <div class="credentials-info">
+            <div class="credentials-title"><i class="fas fa-info-circle"></i> Comptes disponibles</div>
+            <div class="credentials-list">
+                <div><strong>Admin:</strong> admin / admin123</div>
+                <div><strong>Utilisateurs:</strong> user1 à user20 / userX123 (ex: user1/user1123)</div>
+            </div>
+        </div>
+        
         <div class="admin-title" style="margin-top: 20px;"><i class="fas fa-users"></i> Gestion des utilisateurs</div>
         <div id="user-list" class="user-list">
             <!-- Liste des utilisateurs générée dynamiquement -->
+        </div>
+        
+        <div class="admin-title" style="margin-top: 20px;"><i class="fas fa-mobile-alt"></i> Synchronisation multi-appareils</div>
+        <div class="device-management">
+            <div class="device-list">
+                <div><i class="fas fa-info-circle"></i> Les désactivations de compte sont maintenant effectives sur tous les appareils</div>
+                <div><i class="fas fa-sync"></i> Vérification automatique toutes les 30 secondes</div>
+            </div>
         </div>
         
         <button class="btn btn-login" id="back-to-app-btn" style="margin-top: 20px;">
@@ -311,18 +400,52 @@ input::placeholder{color:rgba(255,255,255,0.5);}
     </div>
 </div>
 
+<!-- Notification de synchronisation -->
+<div id="sync-notification" class="sync-notification">
+    <i class="fas fa-info-circle"></i> <span id="sync-message"></span>
+</div>
+
 <script>
 // ==============================================
-// SYSTÈME D'AUTHENTIFICATION
+// SYSTÈME D'AUTHENTIFICATION AVEC SYNCHRONISATION MULTI-APPAREILS
 // ==============================================
 
 // Clé de chiffrement pour les données locales
 const ENCRYPTION_KEY = "saka_prediction_auth_key";
+const SYNC_EVENT_KEY = "user_sync_event";
+const CLOUD_SYNC_KEY = "prediction_cloud_sync";
+const SYNC_CHECK_INTERVAL = 30000; // 30 secondes
 
 // Structure de données pour les utilisateurs
 let users = JSON.parse(localStorage.getItem('prediction_users')) || [];
 let currentUser = null;
 let adminMode = false;
+let syncInterval = null;
+
+// Liste de 20 utilisateurs avec mots de passe simplifiés
+const defaultUsers = [
+    { username: "admin", password: "admin123", isAdmin: true, active: true },
+    { username: "user1", password: "user1123", isAdmin: false, active: true },
+    { username: "user2", password: "user2123", isAdmin: false, active: true },
+    { username: "user3", password: "user3123", isAdmin: false, active: true },
+    { username: "user4", password: "user4123", isAdmin: false, active: true },
+    { username: "user5", password: "user5123", isAdmin: false, active: true },
+    { username: "user6", password: "user6123", isAdmin: false, active: true },
+    { username: "user7", password: "user7123", isAdmin: false, active: true },
+    { username: "user8", password: "user8123", isAdmin: false, active: true },
+    { username: "user9", password: "user9123", isAdmin: false, active: true },
+    { username: "user10", password: "user10123", isAdmin: false, active: true },
+    { username: "user11", password: "user11123", isAdmin: false, active: true },
+    { username: "user12", password: "user12123", isAdmin: false, active: true },
+    { username: "user13", password: "user13123", isAdmin: false, active: true },
+    { username: "user14", password: "user14123", isAdmin: false, active: true },
+    { username: "user15", password: "user15123", isAdmin: false, active: true },
+    { username: "user16", password: "user16123", isAdmin: false, active: true },
+    { username: "user17", password: "user17123", isAdmin: false, active: true },
+    { username: "user18", password: "user18123", isAdmin: false, active: true },
+    { username: "user19", password: "user19123", isAdmin: false, active: true },
+    { username: "user20", password: "user20123", isAdmin: false, active: true }
+];
 
 // Éléments d'interface
 const loginContainer = document.getElementById('login-container');
@@ -338,8 +461,128 @@ const addUserBtn = document.getElementById('add-user-btn');
 const newUsernameInput = document.getElementById('new-username');
 const newPasswordInput = document.getElementById('new-password');
 const userList = document.getElementById('user-list');
-const recoveryBtn = document.getElementById('recovery-btn');
+const resetBtn = document.getElementById('reset-btn');
 const backToAppBtn = document.getElementById('back-to-app-btn');
+const syncNotification = document.getElementById('sync-notification');
+const syncMessage = document.getElementById('sync-message');
+
+// ==============================================
+// SERVICE DE SYNCHRONISATION CLOUD (SIMULATION)
+// ==============================================
+
+// Simuler un service cloud pour la synchronisation multi-appareils
+const CloudSyncService = {
+    // Stockage simulé dans le localStorage pour illustrer le concept
+    // En production, cela serait remplacé par un vrai service backend
+    
+    // Sauvegarder les données utilisateur dans le "cloud"
+    saveToCloud: function(data) {
+        localStorage.setItem(CLOUD_SYNC_KEY, JSON.stringify({
+            users: data,
+            lastUpdated: new Date().getTime()
+        }));
+        return true;
+    },
+    
+    // Récupérer les données utilisateur depuis le "cloud"
+    loadFromCloud: function() {
+        const cloudData = localStorage.getItem(CLOUD_SYNC_KEY);
+        if (cloudData) {
+            return JSON.parse(cloudData);
+        }
+        return null;
+    },
+    
+    // Vérifier si les données locales sont synchronisées avec le cloud
+    isSyncRequired: function() {
+        const cloudData = this.loadFromCloud();
+        if (!cloudData) return true;
+        
+        const localData = localStorage.getItem('prediction_users');
+        if (!localData) return true;
+        
+        // Vérifier si les données ont été modifiées depuis la dernière synchronisation
+        try {
+            const localUsers = JSON.parse(localData);
+            const cloudUsers = cloudData.users;
+            
+            // Comparer les timestamp pour voir qui est le plus récent
+            const localTimestamp = localStorage.getItem('prediction_users_timestamp') || 0;
+            const cloudTimestamp = cloudData.lastUpdated || 0;
+            
+            return cloudTimestamp > localTimestamp;
+        } catch (e) {
+            console.error("Erreur de comparaison des données", e);
+            return true;
+        }
+    },
+    
+    // Synchroniser les données avec le cloud
+    syncWithCloud: function() {
+        const cloudData = this.loadFromCloud();
+        const localData = localStorage.getItem('prediction_users');
+        
+        if (!cloudData && !localData) {
+            // Aucune donnée, initialiser avec les utilisateurs par défaut
+            const defaultUsersData = defaultUsers.map(user => ({
+                ...user,
+                password: hashPassword(user.password)
+            }));
+            this.saveToCloud(defaultUsersData);
+            return defaultUsersData;
+        }
+        
+        if (!cloudData && localData) {
+            // Pas de données cloud, mais données locales existantes
+            const localUsers = JSON.parse(localData);
+            this.saveToCloud(localUsers);
+            return localUsers;
+        }
+        
+        if (cloudData && !localData) {
+            // Données cloud existantes, mais pas de données locales
+            localStorage.setItem('prediction_users', JSON.stringify(cloudData.users));
+            return cloudData.users;
+        }
+        
+        // Les deux ensembles de données existent, déterminer lequel est le plus récent
+        try {
+            const localUsers = JSON.parse(localData);
+            const cloudUsers = cloudData.users;
+            
+            const localTimestamp = localStorage.getItem('prediction_users_timestamp') || 0;
+            const cloudTimestamp = cloudData.lastUpdated || 0;
+            
+            if (cloudTimestamp > localTimestamp) {
+                // Les données cloud sont plus récentes, mettre à jour le local
+                localStorage.setItem('prediction_users', JSON.stringify(cloudUsers));
+                return cloudUsers;
+            } else {
+                // Les données locales sont plus récentes, mettre à jour le cloud
+                this.saveToCloud(localUsers);
+                return localUsers;
+            }
+        } catch (e) {
+            console.error("Erreur de synchronisation", e);
+            return cloudData ? cloudData.users : [];
+        }
+    },
+    
+    // Forcer la synchronisation avec les données cloud
+    forceCloudSync: function() {
+        const cloudData = this.loadFromCloud();
+        if (cloudData) {
+            localStorage.setItem('prediction_users', JSON.stringify(cloudData.users));
+            localStorage.setItem('prediction_users_timestamp', cloudData.lastUpdated);
+            return cloudData.users;
+        }
+        return null;
+    }
+};
+
+// ==============================================
+// FONCTIONS PRINCIPALES
+// ==============================================
 
 // Vérifier si un utilisateur est déjà connecté
 function checkExistingLogin() {
@@ -349,26 +592,72 @@ function checkExistingLogin() {
             const bytes = CryptoJS.AES.decrypt(encryptedUserData, ENCRYPTION_KEY);
             const userData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
             
+            // Synchroniser avec le cloud
+            users = CloudSyncService.syncWithCloud();
+            
             // Vérifier si le compte existe toujours et est actif
             const user = users.find(u => u.username === userData.username && u.password === userData.password);
             if (user && user.active) {
                 currentUser = user;
                 showMainApp();
+                startSyncInterval();
                 return true;
             } else {
                 localStorage.removeItem('current_prediction_user');
+                showSyncNotification("Votre compte a été désactivé. Vous avez été déconnecté.");
+                return false;
             }
         } catch (e) {
             console.error("Erreur de décryptage des données utilisateur", e);
             localStorage.removeItem('current_prediction_user');
+            return false;
         }
     }
     return false;
 }
 
+// Démarrer l'intervalle de synchronisation
+function startSyncInterval() {
+    if (syncInterval) clearInterval(syncInterval);
+    
+    syncInterval = setInterval(() => {
+        if (currentUser) {
+            checkUserStatus();
+        }
+    }, SYNC_CHECK_INTERVAL);
+}
+
+// Arrêter l'intervalle de synchronisation
+function stopSyncInterval() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
+}
+
+// Vérifier le statut de l'utilisateur
+function checkUserStatus() {
+    // Synchroniser avec le cloud
+    users = CloudSyncService.syncWithCloud();
+    
+    if (currentUser) {
+        const user = users.find(u => u.username === currentUser.username);
+        if (!user || !user.active) {
+            // Déconnecter l'utilisateur
+            logout();
+            showSyncNotification("Votre compte a été désactivé sur un autre appareil. Vous avez été déconnecté.");
+        }
+    }
+}
+
 // Fonction de connexion
 function login(username, password) {
-    const user = users.find(u => u.username === username && u.password === hashPassword(password));
+    // Synchroniser avec le cloud
+    users = CloudSyncService.syncWithCloud();
+    
+    // Hacher le mot de passe saisi pour le comparer avec le mot de passe stocké (déjà haché)
+    const hashedPassword = hashPassword(password);
+    const user = users.find(u => u.username === username && u.password === hashedPassword);
     
     if (user) {
         if (user.active) {
@@ -379,7 +668,11 @@ function login(username, password) {
             const encryptedUserData = CryptoJS.AES.encrypt(JSON.stringify(userData), ENCRYPTION_KEY).toString();
             localStorage.setItem('current_prediction_user', encryptedUserData);
             
+            // Déclencher un événement de synchronisation
+            triggerSyncEvent('login', username);
+            
             showMainApp();
+            startSyncInterval();
             return true;
         } else {
             loginMessage.textContent = "Votre compte est désactivé. Contactez l'administrateur.";
@@ -393,8 +686,14 @@ function login(username, password) {
 
 // Fonction de déconnexion
 function logout() {
+    const username = currentUser ? currentUser.username : '';
     currentUser = null;
     localStorage.removeItem('current_prediction_user');
+    stopSyncInterval();
+    
+    // Déclencher un événement de synchronisation
+    triggerSyncEvent('logout', username);
+    
     showLogin();
 }
 
@@ -422,7 +721,7 @@ function showLogin() {
     adminBtn.classList.add('hidden');
 }
 
-// Hacher un mot de passe (simplifié pour cet exemple)
+// Hacher un mot de passe
 function hashPassword(password) {
     return CryptoJS.SHA256(password).toString();
 }
@@ -444,6 +743,10 @@ function addUser(username, password, isAdmin = false) {
     
     saveUsers();
     refreshUserList();
+    
+    // Déclencher un événement de synchronisation
+    triggerSyncEvent('user_added', username);
+    
     return true;
 }
 
@@ -455,16 +758,25 @@ function toggleUserActive(username) {
         saveUsers();
         refreshUserList();
         
+        // Déclencher un événement de synchronisation
+        triggerSyncEvent(user.active ? 'user_activated' : 'user_deactivated', username);
+        
+        // Mettre à jour le timestamp de modification
+        localStorage.setItem('prediction_users_timestamp', new Date().getTime());
+        
         // Si l'utilisateur désactivé est connecté, le déconnecter
         if (currentUser && currentUser.username === username && !user.active) {
             logout();
+            showSyncNotification("Votre compte a été désactivé. Vous avez été déconnecté.");
         }
     }
 }
 
-// Sauvegarder les utilisateurs dans le localStorage
+// Sauvegarder les utilisateurs dans le localStorage et le cloud
 function saveUsers() {
     localStorage.setItem('prediction_users', JSON.stringify(users));
+    localStorage.setItem('prediction_users_timestamp', new Date().getTime());
+    CloudSyncService.saveToCloud(users);
 }
 
 // Rafraîchir la liste des utilisateurs dans le panel admin
@@ -498,27 +810,63 @@ function showAdminPanel() {
     refreshUserList();
 }
 
-// Fonction de récupération du compte administrateur
-function recoverAdminAccess() {
-    if (confirm("Êtes-vous sûr de vouloir réinitialiser le système d'authentification? Un nouveau compte administrateur sera créé.")) {
-        // Vérifier si un compte admin existe déjà
-        const adminExists = users.some(u => u.isAdmin);
+// Réinitialiser tous les comptes
+function resetAllAccounts() {
+    if (confirm("Êtes-vous sûr de vouloir réinitialiser tous les comptes? Tous les comptes utilisateur seront restaurés avec leurs mots de passe par défaut.")) {
+        // Supprimer les données existantes
+        localStorage.removeItem('prediction_users');
+        localStorage.removeItem('current_prediction_user');
+        localStorage.removeItem('prediction_users_timestamp');
         
-        if (!adminExists) {
-            // Créer un nouveau compte administrateur
-            addUser("admin", "admin123", true);
-            alert("Compte administrateur créé avec succès!\nNom d'utilisateur: admin\nMot de passe: admin123\n\nVeuillez vous connecter avec ces identifiants.");
-        } else {
-            // Réactiver tous les comptes administrateur
-            users.forEach(user => {
-                if (user.isAdmin) {
-                    user.active = true;
-                }
-            });
-            saveUsers();
-            alert("Tous les comptes administrateur ont été réactivés. Essayez de vous reconnecter.");
-        }
+        // Réinitialiser la variable users
+        users = [];
+        
+        // Recréer les utilisateurs par défaut
+        defaultUsers.forEach(user => {
+            addUser(user.username, user.password, user.isAdmin);
+        });
+        
+        currentUser = null;
+        
+        // Déclencher un événement de synchronisation
+        triggerSyncEvent('reset', 'all');
+        
+        // Afficher un message de confirmation
+        loginMessage.textContent = "Tous les comptes ont été réinitialisés avec succès!";
+        loginMessage.style.color = "#00cec9";
+        
+        // Réinitialiser les champs de connexion
+        usernameInput.value = "user1";
+        passwordInput.value = "user1123";
+        
+        showLogin();
     }
+}
+
+// Déclencher un événement de synchronisation
+function triggerSyncEvent(action, username) {
+    const eventData = {
+        action: action,
+        username: username,
+        timestamp: new Date().getTime()
+    };
+    
+    localStorage.setItem(SYNC_EVENT_KEY, JSON.stringify(eventData));
+    
+    // Pour déclencher l'événement storage même dans le même onglet
+    setTimeout(() => {
+        localStorage.removeItem(SYNC_EVENT_KEY);
+    }, 100);
+}
+
+// Afficher une notification de synchronisation
+function showSyncNotification(message) {
+    syncMessage.textContent = message;
+    syncNotification.style.display = 'block';
+    
+    setTimeout(() => {
+        syncNotification.style.display = 'none';
+    }, 5000);
 }
 
 // ==============================================
@@ -561,11 +909,69 @@ addUserBtn.addEventListener('click', () => {
     }
 });
 
-// Récupération du compte admin
-recoveryBtn.addEventListener('click', recoverAdminAccess);
+// Réinitialisation des comptes
+resetBtn.addEventListener('click', resetAllAccounts);
 
 // Retour à l'application
 backToAppBtn.addEventListener('click', showMainApp);
+
+// ==============================================
+// SYNCHRONISATION ENTRE NAVIGATEURS
+// ==============================================
+
+// Écouter les changements de localStorage pour la synchronisation
+window.addEventListener('storage', function(e) {
+    if (e.key === SYNC_EVENT_KEY && e.newValue) {
+        const eventData = JSON.parse(e.newValue);
+        
+        switch (eventData.action) {
+            case 'user_deactivated':
+                if (currentUser && currentUser.username === eventData.username) {
+                    logout();
+                    showSyncNotification("Votre compte a été désactivé par un administrateur. Vous avez été déconnecté.");
+                }
+                break;
+                
+            case 'user_activated':
+                showSyncNotification(`L'utilisateur ${eventData.username} a été activé.`);
+                break;
+                
+            case 'user_added':
+                showSyncNotification(`Nouvel utilisateur ${eventData.username} ajouté.`);
+                break;
+                
+            case 'login':
+                showSyncNotification(`Connexion de ${eventData.username} détectée sur un autre appareil.`);
+                break;
+                
+            case 'logout':
+                showSyncNotification(`Déconnexion de ${eventData.username} détectée sur un autre appareil.`);
+                break;
+                
+            case 'reset':
+                if (currentUser) {
+                    logout();
+                    showSyncNotification("Tous les comptes ont été réinitialisés. Vous avez été déconnecté.");
+                }
+                break;
+        }
+    }
+    
+    if (e.key === 'prediction_users') {
+        // Recharger les utilisateurs depuis le localStorage
+        users = JSON.parse(localStorage.getItem('prediction_users')) || [];
+        
+        // Si un utilisateur est connecté, vérifier s'il est toujours actif
+        if (currentUser) {
+            const user = users.find(u => u.username === currentUser.username);
+            if (!user || !user.active) {
+                // Déconnecter l'utilisateur
+                logout();
+                showSyncNotification("Votre compte a été désactivé. Vous avez été déconnecté.");
+            }
+        }
+    }
+});
 
 // ==============================================
 // INITIALISATION
@@ -573,17 +979,21 @@ backToAppBtn.addEventListener('click', showMainApp);
 
 // Vérifier si un utilisateur est déjà connecté au chargement
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les utilisateurs par défaut si aucun n'existe
+    if (users.length === 0) {
+        defaultUsers.forEach(user => {
+            addUser(user.username, user.password, user.isAdmin);
+        });
+    } else {
+        // Synchroniser avec le cloud
+        users = CloudSyncService.syncWithCloud();
+    }
+    
     if (!checkExistingLogin()) {
         showLogin();
     }
     
-    // Créer un compte admin par défaut si aucun utilisateur n'existe
-    if (users.length === 0) {
-        addUser("admin", "admin123", true);
-        addUser("user1", "pass123", false);
-    }
-    
-    console.log("Système d'authentification initialisé");
+    console.log("Système d'authentification initialisé avec synchronisation multi-appareils");
 });
 
 // ==============================================
