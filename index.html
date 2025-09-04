@@ -286,11 +286,11 @@ input::placeholder{color:rgba(255,255,255,0.5);}
     <h2 class="login-title"><i class="fas fa-lock"></i> Connexion Requise</h2>
     <div class="input-group">
         <label for="username"><i class="fas fa-user"></i> Nom d'utilisateur:</label>
-        <input type="text" id="username" placeholder="Votre nom d'utilisateur" value="user1">
+        <input type="text" id="username" placeholder="Votre nom d'utilisateur">
     </div>
     <div class="input-group">
         <label for="password"><i class="fas fa-key"></i> Mot de passe:</label>
-        <input type="password" id="password" placeholder="Votre mot de passe" value="user1123">
+        <input type="password" id="password" placeholder="Votre mot de passe">
     </div>
     <button class="btn btn-login" id="login-btn"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
     
@@ -367,12 +367,12 @@ input::placeholder{color:rgba(255,255,255,0.5);}
 
     <div class="input-group">
         <label for="current-tour"><i class="fas fa-hashtag"></i> Tour actuel:</label>
-        <input type="number" id="current-tour" placeholder="Ex: 1575848" value="1575848">
+        <input type="number" id="current-tour" placeholder="Ex: 1575848">
     </div>
 
     <div class="input-group">
         <label for="current-multiplier"><i class="fas fa-times"></i> Multiplicateur récent:</label>
-        <input type="text" id="current-multiplier" placeholder="Ex: 1.18x" value="1.18x">
+        <input type="text" id="current-multiplier" placeholder="Ex: 1.18x">
     </div>
 
     <div class="input-group" style="display:none;">
@@ -719,6 +719,10 @@ function showLogin() {
     adminMode = false;
     loginMessage.textContent = "";
     adminBtn.classList.add('hidden');
+    
+    // Vider les champs de connexion
+    usernameInput.value = "";
+    passwordInput.value = "";
 }
 
 // Hacher un mot de passe
@@ -834,10 +838,6 @@ function resetAllAccounts() {
         // Afficher un message de confirmation
         loginMessage.textContent = "Tous les comptes ont été réinitialisés avec succès!";
         loginMessage.style.color = "#00cec9";
-        
-        // Réinitialiser les champs de connexion
-        usernameInput.value = "user1";
-        passwordInput.value = "user1123";
         
         showLogin();
     }
@@ -989,9 +989,27 @@ document.addEventListener('DOMContentLoaded', function() {
         users = CloudSyncService.syncWithCloud();
     }
     
-    if (!checkExistingLogin()) {
-        showLogin();
+    // Vérifier si un utilisateur était précédemment connecté
+    const encryptedUserData = localStorage.getItem('current_prediction_user');
+    if (encryptedUserData) {
+        try {
+            const bytes = CryptoJS.AES.decrypt(encryptedUserData, ENCRYPTION_KEY);
+            const userData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+            
+            // Vérifier si le compte existe toujours et est actif
+            const user = users.find(u => u.username === userData.username && u.password === userData.password);
+            if (user && user.active) {
+                // Pré-remplir les champs de connexion mais ne pas connecter automatiquement
+                usernameInput.value = userData.username;
+                // Ne pas pré-remplir le mot de passe pour des raisons de sécurité
+            }
+        } catch (e) {
+            console.error("Erreur de décryptage des données utilisateur", e);
+            localStorage.removeItem('current_prediction_user');
+        }
     }
+    
+    showLogin();
     
     console.log("Système d'authentification initialisé avec synchronisation multi-appareils");
 });
